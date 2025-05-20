@@ -1,3 +1,5 @@
+@Library('my-shared-lib')_
+
 pipeline {
 agent {label 'j-slave'}
 
@@ -7,6 +9,15 @@ agent {label 'j-slave'}
   }
 
   stages{
+
+    stage('Use shared library'){
+      steps{
+        script{
+          mySharedStep()
+        }
+      }
+      
+    }
     stage('Install Node.js') {
             steps {
                 sh '''
