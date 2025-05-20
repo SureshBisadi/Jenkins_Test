@@ -55,5 +55,25 @@ agent {label 'j-slave'}
       '''
     }
   }
+    stage('Docker Build'){
+      steps{
+        sh 'docker build -t sureshbisadi:latest .'
+      }
+    }
+    stage('Docker Login & Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-hub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push sureshbisadi:latest
+                        docker logout
+                    '''
+                }
+            }
+        }
  }
 }
