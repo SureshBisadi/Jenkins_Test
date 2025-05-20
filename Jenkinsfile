@@ -57,7 +57,7 @@ agent {label 'j-slave'}
   }
     stage('Docker Build'){
       steps{
-        sh 'docker build -t sureshbisadi/first-jenkinsTest:latest .'
+        sh 'docker build -t sureshbisadi/first-jenkinstest:latest .'
       }
     }
     stage('Docker Login & Push') {
@@ -69,7 +69,7 @@ agent {label 'j-slave'}
                 )]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push sureshbisadi/first-jenkinsTest:latest
+                        docker push sureshbisadi/first-jenkinstest:latest
                         docker logout
                     '''
                 }
