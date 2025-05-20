@@ -2,10 +2,14 @@ pipeline {
 agent {label 'j-slave'}
 
   stages{
-
-    stage('Test'){
+    stage('Create file'){
       steps{
-        echo 'Testing for initial connection'
+       sh 'echo "Adding text from stage1" > test.txt'
+      }
+    }
+    stage('Show file'){
+      steps{
+        sh 'cat test.txt'
       }
     }
   }
