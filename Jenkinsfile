@@ -1,6 +1,12 @@
 pipeline {
 agent {label 'j-slave'}
 
+  environment {
+    VAULT_ADDR = 'http://65.2.57.33:8200'
+    VAULT_ROLE_ID = '95f8cc7f-9fb4-327f-dd55-e1ed44258771'
+    VAULT_SECRET_ID = '658be021-ea2b-8a8f-99e5-35278d997d17'
+  }
+
   stages{
     stage('Install Node.js') {
             steps {
@@ -60,19 +66,43 @@ agent {label 'j-slave'}
         sh 'docker build -t sureshbisadi/first-jenkinstest:latest .'
       }
     }
-    stage('Docker Login & Push') {
+stage('Login to Vault') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-hub-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push sureshbisadi/first-jenkinstest:latest
-                        docker logout
-                    '''
+                script {
+                    // Login with AppRole and get token
+                    def loginResponse = sh(script: """
+                        curl --silent --request POST --data '{ "role_id": "${VAULT_ROLE_ID}", "secret_id": "${VAULT_SECRET_ID}" }' \
+                        ${VAULT_ADDR}/v1/auth/approle/login
+                    """, returnStdout: true).trim()
+
+                    def loginJson = readJSON text: loginResponse
+                    def vaultToken = loginJson.auth.client_token
+                    env.VAULT_TOKEN = vaultToken
                 }
+            }
+        }
+
+        stage('Fetch DockerHub Credentials') {
+            steps {
+                script {
+                    def secretResponse = sh(script: """
+                        curl --silent --header "X-Vault-Token: ${env.VAULT_TOKEN}" \
+                        ${VAULT_ADDR}/v1/kv/data/dockerhub
+                    """, returnStdout: true).trim()
+
+                    def secretJson = readJSON text: secretResponse
+                    env.DOCKER_USERNAME = secretJson.data.data.username
+                    env.DOCKER_PASSWORD = secretJson.data.data.password
+                }
+            }
+        }
+
+        stage('Login to Docker') {
+            steps {
+                sh """
+                    echo "\n🔐 Logging in as: \$DOCKER_USERNAME"
+                    echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
+                """
             }
         }
  }
