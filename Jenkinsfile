@@ -1,7 +1,7 @@
 @Library('my-shared-lib')_
 
 pipeline {
-agent {label 'j-slave'}
+agent any
 
   
   environment {
