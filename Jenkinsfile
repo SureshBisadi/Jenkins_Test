@@ -1,20 +1,37 @@
 pipeline {
-agent none
+agent {label 'j-slave'}
 
   stages{
-    stage('Create file'){
-      agent any
+    stage('Start'){
       steps{
-       sh 'echo "Adding text from stage1" > test.txt'
-       stash name: 'file-data', includes: 'test.txt'
+      sh 'echo "Started Pipeline"'
       }
     }
-    stage('Show file'){
-      agent any
+    stage('CheckOut'){
       steps{
-        unstash 'file-data'
-        sh 'cat test.txt'
+       git branch: 'main', url: 'https://github.com/SureshBisadi/Jenkins_Test'
       }
+    }
+    stage('List'){
+      steps{
+       sh 'ls'
+      }
+    }
+    stage('Install Dependencies'){
+      steps{
+        sh 'npm install'
+      }
+    }
+    stage('Build'){
+      steps{
+      sh 'npm run dev'
+      }
+    }
+    stage('Checkout Build'){
+    steps{
+      sh 'cd dist'
+      sh 'ls'
     }
   }
+ }
 }
