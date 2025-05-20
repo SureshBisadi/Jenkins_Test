@@ -49,8 +49,10 @@ agent {label 'j-slave'}
     }
     stage('Checkout Build'){
     steps{
-      sh 'cd dist'
-      sh 'ls'
+      sh '''
+      echo "Contents of dist directory:"
+      ls -al dist/
+      '''
     }
   }
  }
