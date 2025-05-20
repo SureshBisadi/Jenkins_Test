@@ -6,7 +6,7 @@ agent none
       agent any
       steps{
        sh 'echo "Adding text from stage1" > test.txt'
-       stash-name: 'file-data', includes: 'test.txt'
+       stash name: 'file-data', includes: 'test.txt'
       }
     }
     stage('Show file'){
