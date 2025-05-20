@@ -44,7 +44,7 @@ agent {label 'j-slave'}
     }
     stage('Build'){
       steps{
-      sh 'npm run dev'
+      sh 'npm run build'
       }
     }
     stage('Checkout Build'){
