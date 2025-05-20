@@ -1,5 +1,5 @@
 pipeline {
-agent any
+agent {label 'j-slave}
 
   environment {
    VAULT_TOKEN = 'hvs.0TQg8ooz32cm9FrgbX8kxlj8'
