@@ -2,9 +2,7 @@ pipeline {
 agent {label 'j-slave'}
 
   environment {
-    VAULT_ADDR = 'http://65.2.57.33:8200'
-    VAULT_ROLE_ID = '95f8cc7f-9fb4-327f-dd55-e1ed44258771'
-    VAULT_SECRET_ID = '658be021-ea2b-8a8f-99e5-35278d997d17'
+   VAULT_TOKEN = 'hvs.0TQg8ooz32cm9FrgbX8kxlj8'
   }
 
   stages{
@@ -66,42 +64,26 @@ agent {label 'j-slave'}
         sh 'docker build -t sureshbisadi/first-jenkinstest:latest .'
       }
     }
-stage('Login to Vault') {
+stage('Fetch Credentials from Vault') {
             steps {
                 script {
-                    // Login with AppRole and get token
-                    def loginResponse = sh(script: """
-                        curl --silent --request POST --data '{ "role_id": "${VAULT_ROLE_ID}", "secret_id": "${VAULT_SECRET_ID}" }' \
-                        ${VAULT_ADDR}/v1/auth/approle/login
+                    def json = sh(script: """
+                        curl --silent --header "X-Vault-Token: $VAULT_TOKEN" \
+                        http://127.0.0.1:8200/v1/kv/data/dockerhub
                     """, returnStdout: true).trim()
 
-                    def loginJson = readJSON text: loginResponse
-                    def vaultToken = loginJson.auth.client_token
-                    env.VAULT_TOKEN = vaultToken
+                    def parsed = readJSON text: json
+                    env.DOCKER_USERNAME = parsed.data.data.username
+                    env.DOCKER_PASSWORD = parsed.data.data.password
                 }
             }
         }
-
-        stage('Fetch DockerHub Credentials') {
-            steps {
-                script {
-                    def secretResponse = sh(script: """
-                        curl --silent --header "X-Vault-Token: ${env.VAULT_TOKEN}" \
-                        ${VAULT_ADDR}/v1/kv/data/dockerhub
-                    """, returnStdout: true).trim()
-
-                    def secretJson = readJSON text: secretResponse
-                    env.DOCKER_USERNAME = secretJson.data.data.username
-                    env.DOCKER_PASSWORD = secretJson.data.data.password
-                }
-            }
-        }
-
-        stage('Login to Docker') {
+        stage('Use Credentials') {
             steps {
                 sh """
-                    echo "\n🔐 Logging in as: \$DOCKER_USERNAME"
-                    echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
+                    echo "DockerHub Username: $DOCKER_USERNAME"
+                    echo "Logging in to Docker..."
+                    echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
                 """
             }
         }
